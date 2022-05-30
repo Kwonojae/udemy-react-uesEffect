@@ -25,6 +25,8 @@ function App() {
   };
 
   const logoutHandler = () => {
+    //localStorage 저장된 키를  지움
+    localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
   };
 

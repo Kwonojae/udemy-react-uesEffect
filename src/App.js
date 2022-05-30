@@ -16,7 +16,7 @@ function App() {
       setIsLoggedIn(true);
       //유효한지 검증하고 상태변경 해줌
     }
-  }, []);
+  }, []); //딱 한번씩만 실행하고 싶다면 빈배열을 넘기면된다!
   const loginHandler = (email, password) => {
     // We should of course check email and password
     // But it's just a dummy/ demo anyways

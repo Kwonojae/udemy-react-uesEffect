@@ -12,10 +12,23 @@ const Login = (props) => {
   const [formIsValid, setFormIsValid] = useState(false);
 
   useEffect(() => {
-    //컴포넌트가 재평가 될 때마다 재실행됨
-    setFormIsValid(
-      enteredEmail.includes("@") && enteredPassword.trim().length > 6
-    );
+    //useEffect 컴포넌트가 재평가 될 때마다 재실행됨
+    const identifier = setTimeout(() => {
+      //setTimeout 브라우저에 내장되어있는 함수 Effect,리액트와는 아무 관련이 없다
+      console.log("checking form validit");
+      setFormIsValid(
+        enteredEmail.includes("@") && enteredPassword.trim().length > 6
+      );
+    }, 3000); //5초마다 갱신한다.3000 3초
+
+    return () => {
+      //클린업 함수
+      // 언제 실행되는지?
+      // useEffect가 처음! 실행되는 경우를 제외하고는 useEffect가 실행되기 전에 실행된다
+      //dom에서 마운트가 해제될 떄마다 언마운트 , 즉 컴포넌트가 재사용될 때마다
+      console.log("CLEANUP");
+      clearTimeout(identifier); //타임아웃이 실god되기 전의 시간을 초기화 해줌, 새로운 타이머를 설정하기 전에 마지막 타이머를 지운다
+    };
   }, [enteredEmail, enteredPassword]); //의존성 변경된 경우에만 실행한다  //변경된게 없으면 useEffect는 실행되지 않음
   const emailChangeHandler = (event) => {
     setEnteredEmail(event.target.value);

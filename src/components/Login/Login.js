@@ -1,45 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useReducer } from "react";
 
 import Card from "../UI/Card/Card";
 import classes from "./Login.module.css";
 import Button from "../UI/Button/Button";
 
+const emailReducer = (state, action) => {
+  //빠깥에서 정의된 이유는 리듀서 함수 내부에서는 컴포넌트 함수 내부에서 만들어진 어떤 데이터도 필요하지 않기 때문
+  if (action.type === "USER_INPUT") {
+    return { value: action.val, isValid: action.val.includes("@") };
+  }
+  if (action.type === "INPUT_BLUR") {
+    return { value: state.value, isValid: state.value.includes("@") };
+  }
+  return { value: "", isValid: false };
+};
+
 const Login = (props) => {
-  const [enteredEmail, setEnteredEmail] = useState("");
-  const [emailIsValid, setEmailIsValid] = useState();
+  // const [enteredEmail, setEnteredEmail] = useState("");    useEffect 사용시 상태값
+  // const [emailIsValid, setEmailIsValid] = useState();
   const [enteredPassword, setEnteredPassword] = useState("");
   const [passwordIsValid, setPasswordIsValid] = useState();
   const [formIsValid, setFormIsValid] = useState(false);
+  //useReducer : 컴포넌트의 상태 업데이트로 로직을 컴포넌트에서 분리시킬수 있다.
+  //상태 업데이트 로직을 컴포넌트 바깥에 작성할 수 도 있고, 심지어 다른 파일에 작성 후 불러와서 사용할수도 있다.
+  //새로 업데이트된 state를 반환한다.
+  //const [<상태 객체>, <dispatch 함수>] = useReducer(<reducer 함수>, <초기 상태>, <초기 함수>)
+  // dispatch 함수는 컴포넌트 내에서 상태 변경을 일으키기 위해서 사용되는데 인자로 reducer 함수에 넘길 행동(action) 객체를 받습니다
+  //컴포넌트에서 dispatch 함수에 행동(action)을 던지면, reducer 함수가 이 행동(action)에 따라서 상태(state)를 변경해줍니다.
+  const [emailState, dispatchEmail] = useReducer(emailReducer, {
+    //초기값 설정
+    value: "",
+    isValid: null,
+  });
 
-  useEffect(() => {
-    //useEffect 컴포넌트가 재평가 될 때마다 재실행됨
-    const identifier = setTimeout(() => {
-      //setTimeout 브라우저에 내장되어있는 함수 Effect,리액트와는 아무 관련이 없다
-      console.log("checking form validit");
-      setFormIsValid(
-        enteredEmail.includes("@") && enteredPassword.trim().length > 6
-      );
-    }, 3000); //5초마다 갱신한다.3000 3초
+  // useEffect(() => {
+  //   //useEffect 컴포넌트가 재평가 될 때마다 재실행됨
+  //   const identifier = setTimeout(() => {
+  //     //setTimeout 브라우저에 내장되어있는 함수 Effect,리액트와는 아무 관련이 없다
+  //     console.log("checking form validit");
+  //     setFormIsValid(
+  //       enteredEmail.includes("@") && enteredPassword.trim().length > 6
+  //     );
+  //   }, 3000); //5초마다 갱신한다.3000 3초
 
-    return () => {
-      //클린업 함수
-      // 언제 실행되는지?
-      // useEffect가 처음! 실행되는 경우를 제외하고는 useEffect가 실행되기 전에 실행된다
-      //dom에서 마운트가 해제될 떄마다 언마운트 , 즉 컴포넌트가 재사용될 때마다
-      console.log("CLEANUP");
-      clearTimeout(identifier); //타임아웃이 실god되기 전의 시간을 초기화 해줌, 새로운 타이머를 설정하기 전에 마지막 타이머를 지운다
-    };
-  }, [enteredEmail, enteredPassword]); //의존성 변경된 경우에만 실행한다  //변경된게 없으면 useEffect는 실행되지 않음
+  //   return () => {
+  //     //클린업 함수
+  //     // 언제 실행되는지?
+  //     // useEffect가 처음! 실행되는 경우를 제외하고는 useEffect가 실행되기 전에 실행된다
+  //     //dom에서 마운트가 해제될 떄마다 언마운트 , 즉 컴포넌트가 재사용될 때마다
+  //     console.log("CLEANUP");
+  //     clearTimeout(identifier); //타임아웃이 실god되기 전의 시간을 초기화 해줌, 새로운 타이머를 설정하기 전에 마지막 타이머를 지운다
+  //   };
+  // }, [enteredEmail, enteredPassword]); //의존성 변경된 경우에만 실행한다  //변경된게 없으면 useEffect는 실행되지 않음
+
   const emailChangeHandler = (event) => {
-    setEnteredEmail(event.target.value);
+    dispatchEmail({ type: "USER_INPUT", val: event.target.value });
+    setFormIsValid(
+      event.target.value.includes("@") && enteredPassword.trim().length > 6
+    );
   };
 
   const passwordChangeHandler = (event) => {
     setEnteredPassword(event.target.value);
+    setFormIsValid(emailState.isValid && event.target.value.trim().length > 6);
   };
 
   const validateEmailHandler = () => {
-    setEmailIsValid(enteredEmail.includes("@"));
+    dispatchEmail({ type: "INPUT_BLUR" });
   };
 
   const validatePasswordHandler = () => {
@@ -48,7 +75,7 @@ const Login = (props) => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(enteredEmail, enteredPassword);
+    props.onLogin(emailState.value, enteredPassword);
   };
 
   return (
@@ -56,14 +83,14 @@ const Login = (props) => {
       <form onSubmit={submitHandler}>
         <div
           className={`${classes.control} ${
-            emailIsValid === false ? classes.invalid : ""
+            emailState.isValid === false ? classes.invalid : ""
           }`}
         >
           <label htmlFor="email">E-Mail</label>
           <input
             type="email"
             id="email"
-            value={enteredEmail}
+            value={emailState.value}
             onChange={emailChangeHandler}
             onBlur={validateEmailHandler}
           />
